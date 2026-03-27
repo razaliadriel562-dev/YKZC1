@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center mt-3">
+    <div class="col-lg-8">
+        <div class="wx-container shadow-sm">
+            <div class="wx-header">社团交流大厅 (网页版)</div>
+            <div class="wx-messages" id="chat-box"></div>
+            <div class="wx-input-area">
+                <form id="chatForm" class="d-flex w-100 gap-2 mb-0">
+                    <input type="text" id="messageInput" class="wx-input" placeholder="按回车发送..." autocomplete="off" required>
+                    <button type="submit" class="wx-btn">发送</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<span id="currentUserName" style="display:none;">{{ session.name }}</span>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const chatBox = document.getElementById('chat-box'), chatForm = document.getElementById('chatForm'), msgInput = document.getElementById('messageInput');
+    const myName = document.getElementById('currentUserName').innerText.trim();
+    chatForm.addEventListener('submit', e => {
+        e.preventDefault();
+        fetch('/send_message', { method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: `message=${encodeURIComponent(msgInput.value.trim())}` })
+        .then(() => { msgInput.value = ''; loadMsg(); });
+    });
+    function loadMsg() {
+        fetch('/get_messages').then(r => r.json()).then(msgs => {
+            const isBottom = chatBox.scrollHeight - chatBox.clientHeight <= chatBox.scrollTop + 50;
+            chatBox.innerHTML = '';
+            msgs.forEach(m => {
+                const isMe = m.name === myName;
+                const avatarChar = m.name.charAt(0);
+                const bg = isMe ? '#95ec69' : '#0066cc';
+                chatBox.innerHTML += `
+                    <div class="msg-row ${isMe ? 'me' : 'other'}">
+                        <div class="avatar" style="background:${bg};">${avatarChar}</div>
+                        <div class="msg-content">
+                            <div class="msg-name">${m.name} · ${m.time}</div>
+                            <div class="msg-bubble">${m.message}</div>
+                        </div>
+                    </div>`;
+            });
+            if(isBottom) chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+    loadMsg(); setInterval(loadMsg, 2000);
+});
+</script>
+{% endblock %}

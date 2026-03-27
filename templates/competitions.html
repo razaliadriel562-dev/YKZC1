@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 mt-4">
+    <h1 class="fw-bold" style="font-size: 2.5rem; letter-spacing: -1px;">社团竞赛档案库</h1>
+</div>
+
+<div class="apple-card mb-4 p-3 d-flex gap-3 align-items-center" style="background: rgba(255,255,255,0.6); backdrop-filter: blur(10px);">
+    <div class="flex-grow-1">
+        <input type="text" id="searchName" class="form-control bg-white" placeholder="🔍 搜索比赛名称..." style="border-radius: 99px; padding-left: 20px;">
+    </div>
+    <select id="filterYear" class="form-control bg-white w-auto" style="border-radius: 99px;">
+        <option value="">所有年份</option>
+        <option value="2026">2026年</option>
+        <option value="2025">2025年</option>
+    </select>
+    <select id="filterMonth" class="form-control bg-white w-auto" style="border-radius: 99px;">
+        <option value="">所有月份</option>
+        <option value="01">1月</option><option value="02">2月</option><option value="03">3月</option>
+        <option value="04">4月</option><option value="05">5月</option><option value="06">6月</option>
+        <option value="07">7月</option><option value="08">8月</option><option value="09">9月</option>
+        <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+    </select>
+</div>
+
+<div class="row g-4" id="compContainer">
+    {% for comp in comps %}
+    <div class="col-12 comp-item" data-name="{{ comp.name | lower }}" data-date="{{ comp.date.strftime('%Y-%m-%d') }}">
+        <div class="apple-card p-0 overflow-hidden">
+            <div class="p-4" style="background: #fafafa; border-bottom: 1px solid #f0f0f0;">
+                <h4 class="fw-bold mb-0 text-dark">{{ comp.name }}</h4>
+                <small class="text-muted">最后收录时间: {{ comp.date }}</small>
+            </div>
+
+            <div class="p-4">
+                <div class="row g-3">
+                    {% for r in comp.records %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="p-3 border rounded-3 h-100" style="background: #fff;">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="fw-bold">{{ r.user.name }}</span>
+                                <span class="badge bg-primary bg-opacity-10 text-primary">{{ r.award }}</span>
+                            </div>
+                            <p class="text-muted mb-2" style="font-size: 0.85rem;">
+                                {% if r.is_team %}👥 团队赛 (队友: {{ r.teammates }}){% else %}👤 个人赛{% endif %}
+                            </p>
+                            <div class="d-flex gap-2 mt-auto">
+                                {% if r.certificate_path %}<a href="{{ url_for('static', filename=r.certificate_path) }}" target="_blank" class="text-decoration-none text-info" style="font-size: 0.85rem;">📸 奖状</a>{% endif %}
+                                {% if r.materials_path %}<a href="{{ url_for('static', filename=r.materials_path) }}" target="_blank" class="text-decoration-none text-success" style="font-size: 0.85rem;">📥 备赛资料</a>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+// 智能多维筛选逻辑
+document.addEventListener('DOMContentLoaded', () => {
+    const searchName = document.getElementById('searchName');
+    const filterYear = document.getElementById('filterYear');
+    const filterMonth = document.getElementById('filterMonth');
+    const items = document.querySelectorAll('.comp-item');
+
+    function filterComps() {
+        const text = searchName.value.toLowerCase();
+        const year = filterYear.value;
+        const month = filterMonth.value;
+
+        items.forEach(item => {
+            const nameMatch = item.dataset.name.includes(text);
+            const dateStr = item.dataset.date; // format YYYY-MM-DD
+            const yearMatch = year === '' || dateStr.startsWith(year);
+            const monthMatch = month === '' || dateStr.split('-') === month;
+
+            if (nameMatch && yearMatch && monthMatch) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
+    searchName.addEventListener('input', filterComps);
+    filterYear.addEventListener('change', filterComps);
+    filterMonth.addEventListener('change', filterComps);
+});
+</script>
+{% endblock %}

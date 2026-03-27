@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">📋 出入库流水账</h2>
+<table class="table table-hover neu-card">
+    <thead>
+        <tr>
+            <th>时间</th>
+            <th>成员</th>
+            <th>物料</th>
+            <th>数量</th>
+            <th>用途</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>{{ log.user.name }}</td>
+            <td>{{ log.material.name }}</td>
+            <td class="text-danger">-{{ log.amount }}</td>
+            <td>{{ log.purpose }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

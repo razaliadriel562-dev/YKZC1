@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 mt-4">
+    <h1 class="fw-bold" style="font-size: 2.5rem; letter-spacing: -1px;">智能物料管理</h1>
+</div>
+{% if session.is_admin %}
+<div class="apple-card p-3 mb-4 d-flex gap-3 align-items-center bg-white">
+    <form method="POST" action="{{ url_for('import_csv') }}" enctype="multipart/form-data" class="d-flex gap-3 w-100">
+        <input type="file" name="csv_file" accept=".csv" class="form-control bg-light" required>
+        <button type="submit" class="btn btn-dark text-nowrap" style="border-radius: 12px;">📥 导入 CSV</button>
+    </form>
+</div>
+{% endif %}
+<div class="mb-5"><input type="text" id="searchInput" class="form-control form-control-lg bg-white" placeholder="🔍 搜索物料..." style="border-radius: 99px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);"></div>
+<div class="row g-3" id="materialContainer">
+    {% for material in materials %}
+    <div class="col-md-4 col-lg-3 material-item" data-name="{{ material.name | lower }} {{ material.category | lower }}">
+        <div class="apple-card h-100 d-flex flex-column p-4">
+            <small class="text-muted fw-bold mb-2">{{ material.category or '未分类' }}</small>
+            <h5 class="fw-bold text-dark mb-4" style="line-height: 1.4;">{{ material.name }}</h5>
+            <div class="mt-auto d-flex justify-content-between align-items-center">
+                <div style="font-size: 0.9rem; font-weight: 500;">
+                    {% if material.stock <= 0 %}
+                        <span class="status-dot dot-yellow"></span><span class="text-muted">不可用</span>
+                    {% else %}
+                        <span class="status-dot dot-green"></span><span>库存: {{ material.stock }}</span>
+                    {% endif %}
+                </div>
+                {% if material.stock > 0 %}
+                <button class="btn btn-primary-custom btn-sm" data-bs-toggle="modal" data-bs-target="#claimModal" onclick="setClaimMaterial({{ material.id }}, '{{ material.name }}', {{ material.stock }})">领用</button>
+                {% else %}
+                <button class="btn btn-light btn-sm text-muted fw-bold" disabled>暂无</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<div class="modal fade" id="claimModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content apple-card border-0"><div class="modal-header border-0 pb-0"><h5 class="modal-title fw-bold" id="modalMaterialName">领取物料</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><form id="claimForm" method="POST"><div class="modal-body"><input type="hidden" name="material_id" id="modalMaterialId"><div class="mb-4 mt-2"><label class="text-muted mb-2">领取数量（最多 <span id="modalMaxStock" class="fw-bold text-dark"></span>）</label><input type="number" name="amount" id="modalAmount" class="form-control" min="1" required></div><div class="mb-2"><label class="text-muted mb-2">用途说明</label><textarea name="purpose" class="form-control" rows="3" required></textarea></div></div><div class="modal-footer border-0 pt-0"><button type="button" class="btn text-muted" data-bs-dismiss="modal">取消</button><button type="submit" class="btn btn-primary-custom">确认领取</button></div></form></div></div></div>
+<script>
+document.getElementById('searchInput').addEventListener('input', e => {
+    const term = e.target.value.toLowerCase().trim();
+    document.querySelectorAll('.material-item').forEach(i => i.style.display = i.dataset.name.includes(term) ? '' : 'none');
+});
+</script>
+{% endblock %}
